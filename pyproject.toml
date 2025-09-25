@@ -5,12 +5,12 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "orderoracle"
 version = "0.1.0"
-description = "Evaluate matryoshka embedding dimensionality schedules via IR correlations"
+description = "Evaluate IR test collections by correlating empirical system rankings with an a priori ranking (current specialization: matryoshka embedding dimensions)"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "LICENSE" }
 authors = [
-  { name = "OrderOracle Authors" }
+  { name = "Björn Engelmann" }
 ]
 keywords = ["IR", "evaluation", "embeddings", "matryoshka", "ranking", "retrieval"]
 classifiers = [
@@ -58,9 +58,9 @@ all = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/your-org/orderoracle"
-Repository = "https://github.com/your-org/orderoracle"
-Issues = "https://github.com/your-org/orderoracle/issues"
+Homepage = "https://github.com/bjoernengelmann/orderoracle"
+Repository = "https://github.com/bjoernengelmann/orderoracle"
+Issues = "https://github.com/bjoernengelmann/orderoracle/issues"
 
 [project.scripts]
 orderoracle = "orderoracle.cli.main:main"
