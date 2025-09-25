@@ -1,16 +1,20 @@
 ### OrderOracle
 
-OrderOracle helps you evaluate matryoshka-style embedding dimensionality schedules for retrieval. It measures how well decreasing embedding dimensions preserve ranking quality using IR metrics and correlations (Kendall's tau, RBO) on your datasets.
+OrderOracle evaluates the quality of IR test collections (documents, topics, qrels) by checking how well the empirical ranking of retrieval systems induced by the collection correlates with an a priori target ranking. The core assumption is: the stronger this correlation, the better the test collection.
 
 It includes a simple CLI for:
 - pt-export-docs: Export documents from a PyTerrier dataset to JSONL
 - embed: Create topic/document embeddings with Sentence-Transformers
-- eval: Compute correlation between a dimension schedule and empirical IR scores
+- eval: Compute correlation between the empirical systems ranking and an a priori ranking
 - report: Generate a CSV report over multiple measures/correlations
 
 ### Why this exists
 
-Matryoshka embeddings let you truncate vectors to smaller prefixes. This project quantifies how rankings change as you truncate from high to low dimensions, so you can choose the right trade-off between speed and effectiveness.
+Evaluating a test collection should not only look at absolute effectiveness numbers; it should also reflect whether the collection preserves the expected relative ordering of systems. If the system ordering you obtain from a collection aligns with a reasonable a priori ordering (e.g., based on theory, cost/complexity, or an external leaderboard), then the collection is likely informative and discriminative. OrderOracle operationalizes this idea by computing correlations (e.g., Kendall's tau, RBO) between the empirical system ranking induced by effectiveness measurements and a provided a priori ranking.
+
+### Current specialization: matryoshka-style embedding schedules
+
+The current implementation specializes the general idea by treating different embedding truncation dimensions ("matryoshka" schedules) as the set of "systems". The a priori ranking is simply the natural order of dimensions (e.g., 16 < 32 < 64 < ...), and the empirical ranking is derived from IR effectiveness measured over your topics/qrels. High correlation indicates that smaller dimensional variants degrade gracefully in the expected order.
 
 ### Installation
 
@@ -44,6 +48,8 @@ Note for macOS on Apple Silicon: installing torch may require following PyTorch'
 ### Quickstart
 
 After installing, the `orderoracle` CLI is available.
+
+The Quickstart below demonstrates the matryoshka specialization where "systems" are embedding truncation dimensions and the a priori ranking is the dimension order.
 
 1) Export docs from a PyTerrier dataset (optional helper):
 ```bash
@@ -120,7 +126,7 @@ Builds embeddings and saves `.npy` or `.npz` files. Skips recomputation for alre
 ```bash
 orderoracle eval --docs-path docs.jsonl --topics-path topics.json --qrels-path qrels.txt --emb-path ./embeddings --dims-pow2 16-512 [--measures ndcg,P@10] [--correlations kendall,rbo] [--k 10]
 ```
-Computes correlations between the dimension schedule and effectiveness-based orderings.
+Computes correlations between the empirical systems ranking (from effectiveness) and the a priori ranking. In the default specialization, systems are embedding dimensions ordered by size.
 
 ```bash
 orderoracle report ... --output-csv report.csv
@@ -139,12 +145,21 @@ evaluator = CollectionQualityEvaluator(backend, dims_schedule=[16, 32, 64, 128, 
 result = evaluator.correlations_from_embeddings_pt(coll, measures=["nDCG@10", "P@10"], correlations=["kendall", "rbo"], default_k=10)
 print(result)
 ```
+The example above illustrates the matryoshka specialization where `dims_schedule` enumerates the systems and their a priori order.
 
 ### Troubleshooting
 
-- If RBO is requested, ensure `rbo` is installed: `pip install rbo`.
-- For PyTerrier commands, install `python-terrier` and initialize Java if needed.
-- On macOS MPS or CUDA devices, ensure your PyTorch install supports the device.
+- To enable debug logging, set `ORDERORACLE_LOG_LEVEL=DEBUG`:
+```bash
+# macOS/Linux (current shell)
+export ORDERORACLE_LOG_LEVEL=DEBUG
+
+# One-shot for a single command
+ORDERORACLE_LOG_LEVEL=DEBUG orderoracle eval ...
+
+# Windows PowerShell (current session)
+$env:ORDERORACLE_LOG_LEVEL = 'DEBUG'
+```
 
 ### License
 
