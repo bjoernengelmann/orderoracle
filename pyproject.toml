@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "orderoracle"
-version = "0.1.0"
+version = "0.1.1"
 description = "Evaluate IR test collections by correlating empirical system rankings with an a priori ranking (current specialization: matryoshka embedding dimensions)"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -70,6 +70,7 @@ package-dir = {"orderoracle" = "."}
 packages = [
   "orderoracle",
   "orderoracle.cli",
+  "orderoracle.cli.commands",
   "orderoracle.data",
   "orderoracle.embeddings",
   "orderoracle.evaluation",

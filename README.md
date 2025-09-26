@@ -4,6 +4,7 @@ OrderOracle evaluates the quality of IR test collections (documents, topics, qre
 
 It includes a simple CLI for:
 - pt-export-docs: Export documents from a PyTerrier dataset to JSONL
+- pt-export-topics-qrels: Export topics and qrels from a PyTerrier dataset
 - embed: Create topic/document embeddings with Sentence-Transformers
 - eval: Compute correlation between the empirical systems ranking and an a priori ranking
 - report: Generate a CSV report over multiple measures/correlations
@@ -56,6 +57,14 @@ The Quickstart below demonstrates the matryoshka specialization where "systems" 
 orderoracle pt-export-docs \
   --dataset irds:vaswani \
   --output-path ./data/docs.jsonl
+```
+
+Alternatively, export topics and qrels directly from a PyTerrier dataset:
+```bash
+orderoracle pt-export-topics-qrels \
+  --dataset irds:vaswani \
+  --topics-output ./data/topics.json \
+  --qrels-output ./data/qrels.txt
 ```
 
 2) Prepare topics and qrels
@@ -119,12 +128,37 @@ orderoracle pt-export-docs --dataset irds:vaswani --output-path ./docs.jsonl [--
 Exports corpus rows to `{id, text}` JSONL using PyTerrier.
 
 ```bash
-orderoracle embed --model-name Qwen/Qwen3-Embedding-0.6B --docs-path docs.jsonl --topics-path topics.json --output-path ./embeddings [--device cpu|mps|cuda]
+orderoracle pt-export-topics-qrels \
+  --dataset irds:vaswani \
+  --topics-output ./topics.json \
+  --qrels-output ./qrels.txt \
+  [--topics-text-field query]
+```
+Exports topics as a JSON array of `{qid, text}` and qrels as TREC lines (`qid 0 docno rel`) or, if `--qrels-output` ends with `.json`, a wide JSON with keys `qid`, `docno`, `label`.
+
+```bash
+orderoracle embed \
+  --model-name Qwen/Qwen3-Embedding-0.6B \
+  --docs-path docs.jsonl \
+  --topics-path topics.json \
+  --output-path ./embeddings \
+  [--device cpu|mps|cuda] \
+  [--batch-size 32] \
+  [--truncate-chars N | --truncate-tokens N]
 ```
 Builds embeddings and saves `.npy` or `.npz` files. Skips recomputation for already-present arrays.
 
 ```bash
-orderoracle eval --docs-path docs.jsonl --topics-path topics.json --qrels-path qrels.txt --emb-path ./embeddings --dims-pow2 16-512 [--measures ndcg,P@10] [--correlations kendall,rbo] [--k 10]
+orderoracle eval \
+  --docs-path docs.jsonl \
+  --topics-path topics.json \
+  --qrels-path qrels.txt \
+  --emb-path ./embeddings \
+  --dims-pow2 16-512 \
+  [--measures ndcg,P@10 | --measures AP --measures nDCG@10] \
+  [--measures-csv "AP,P@10,nDCG@10"] \
+  [--correlations kendall --correlations rbo | --correlations-csv "kendall,rbo"] \
+  [--k 10]
 ```
 Computes correlations between the empirical systems ranking (from effectiveness) and the a priori ranking. In the default specialization, systems are embedding dimensions ordered by size.
 
